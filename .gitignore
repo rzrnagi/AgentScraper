@@ -1,0 +1,48 @@
+# Planning files (local only)
+PLAN.txt
+TODO.txt
+PROGRESS.txt
+
+# Environment & secrets
+.env
+*.env
+
+# Output data
+output/
+logs/
+checkpoint.json
+checkpoint.*-test.json
+*.db
+*.sqlite
+*.sqlite3
+config.*-test.yaml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright
+playwright/.auth/
+
+# Local prompt artifacts
+Take Home Test for AI team (final).pdf

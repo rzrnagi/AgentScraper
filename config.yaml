@@ -1,0 +1,25 @@
+targets:
+- url: https://www.safcodental.com/catalog/gloves
+  category: Dental Exam Gloves
+- url: https://www.safcodental.com/catalog/sutures-surgical-products
+  category: Sutures & Surgical Products
+crawl:
+  request_delay_seconds: 1.5
+  request_delay_jitter: 0.5
+  max_retries: 3
+  retry_backoff_base: 2.0
+  page_load_timeout_ms: 30000
+  headless: true
+output:
+  dir: ./output
+  db_file: ./output/products.db
+  csv_file: ./output/products.csv
+  json_file: ./output/products.json
+checkpoint:
+  file: ./checkpoint.json
+logging:
+  level: INFO
+  file: ./logs/scraper.log
+llm:
+  analyst_tier: fast
+  extractor_tier: fast
