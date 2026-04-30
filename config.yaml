@@ -2,7 +2,7 @@ targets:
 - url: https://www.safcodental.com/catalog/gloves
   category: Dental Exam Gloves
 - url: https://www.safcodental.com/catalog/sutures-surgical-products
-  category: Sutures & Surgical Products
+  category: Sutures & surgical products
 crawl:
   request_delay_seconds: 1.5
   request_delay_jitter: 0.5

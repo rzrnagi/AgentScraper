@@ -70,13 +70,9 @@ class ExtractorAgent:
 
         try:
             await page.goto(product_url, wait_until="load", timeout=self.timeout)
-            try:
-                await page.wait_for_load_state("networkidle", timeout=10000)
-            except Exception:
-                logger.debug("Extractor: networkidle timeout for %s", product_url)
-            await page.wait_for_timeout(2500)
+            await page.wait_for_timeout(1500)
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.6)")
-            await page.wait_for_timeout(1000)
+            await page.wait_for_timeout(500)
 
             html = await page.content()
             soup = BeautifulSoup(html, "lxml")
@@ -106,9 +102,9 @@ class ExtractorAgent:
                     if v and not extracted.get(k):
                         extracted[k] = v
 
-            # Merge into enriched (LLM/selector wins over Algolia for detail fields)
+            # Merge: only fill fields not already populated by upstream (e.g. Algolia)
             for field, value in extracted.items():
-                if value is not None:
+                if value is not None and not enriched.get(field):
                     enriched[field] = value
 
             # Normalize price

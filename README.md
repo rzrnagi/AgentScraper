@@ -78,12 +78,10 @@ storage/
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-python3 -m playwright install chromium
 python3 setup.py
 ```
 
-`setup.py` validates the API key with a live call before writing `.env`.
+`setup.py` installs dependencies, downloads the Playwright browser, and validates your API key before writing `.env`.
 
 ## Usage
 
@@ -128,9 +126,14 @@ Resumes from checkpoint automatically if interrupted.
 
 ## Demo
 
+## Quickstart
+
 ```bash
-python3 setup.py
-python3 discover.py --site https://www.safcodental.com --keywords gloves sutures
-python3 main.py --limit 2    # verify pipeline end-to-end
-python3 main.py              # full run
+git clone https://github.com/rzrnagi/AgentScraper.git
+cd AgentScraper
+python3 -m venv .venv && source .venv/bin/activate
+python3 setup.py                                                                   # install deps + configure LLM
+python3 discover.py --site https://www.safcodental.com --keywords gloves sutures   # populate config.yaml
+python3 main.py --limit 2                                                          # verify pipeline end-to-end
+python3 main.py                                                                    # full run
 ```

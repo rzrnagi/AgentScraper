@@ -125,8 +125,27 @@ def write_env(provider: str, key: str = None, ollama_model: str = None):
     print(f"\n  Written to {ENV_FILE.resolve()}")
 
 
+def install_dependencies():
+    req = Path("requirements.txt")
+    if not req.exists():
+        return
+    print("\nInstalling dependencies...")
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "-q"],
+        capture_output=False,
+    )
+    if result.returncode != 0:
+        print("  Warning: pip install failed. Run manually: pip install -r requirements.txt")
+    else:
+        print("  Dependencies installed.")
+    print("\nInstalling Playwright browser...")
+    subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False)
+
+
 def main():
     print_header()
+
+    install_dependencies()
 
     if ENV_FILE.exists():
         overwrite = input("\n.env already exists. Overwrite? (y/n): ").strip().lower()
