@@ -9,12 +9,16 @@ PROGRESS.txt
 
 # Output data
 output/
+!output/
+!output/products.csv
+!output/products.json
 logs/
 checkpoint.json
 checkpoint.*-test.json
 *.db
 *.sqlite
 *.sqlite3
+!output/products.db
 config.*-test.yaml
 
 # Python
