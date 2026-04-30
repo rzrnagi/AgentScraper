@@ -16,11 +16,11 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
-from anthropic import AsyncAnthropic
 
 from agents.navigator import NavigatorAgent
 from agents.extractor import ExtractorAgent
 from agents.validator import ValidatorAgent
+from agents.llm_client import LLMClient
 from storage.db import Database
 from storage.export import export_csv, export_json
 
@@ -72,10 +72,15 @@ async def run(config_path: str = "config.yaml", limit: int = None):
     db = Database(cfg["output"]["db_file"])
     validator = ValidatorAgent()
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    anthropic_client = AsyncAnthropic(api_key=api_key) if api_key else None
-    if not anthropic_client:
-        logger.warning("ANTHROPIC_API_KEY not set — LLM fallback disabled")
+    llm_client = None
+    provider = os.getenv("LLM_PROVIDER", "").strip().lower()
+    if provider:
+        try:
+            llm_client = LLMClient.from_env()
+        except Exception as e:
+            logger.warning("LLM setup invalid for provider=%s — %s", provider, e)
+    else:
+        logger.warning("LLM_PROVIDER not set — LLM fallback disabled")
 
     crawl_cfg = cfg["crawl"]
 
@@ -95,7 +100,7 @@ async def run(config_path: str = "config.yaml", limit: int = None):
         )
         extractor = ExtractorAgent(
             context=context,
-            anthropic_client=anthropic_client,
+            llm_client=llm_client,
             use_llm_fallback=cfg["llm"].get("use_for_extraction_fallback", True),
             rate_limit_delay=crawl_cfg.get("request_delay_seconds", 1.5),
             page_timeout_ms=crawl_cfg.get("page_load_timeout_ms", 30000),

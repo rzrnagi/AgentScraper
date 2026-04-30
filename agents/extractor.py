@@ -11,17 +11,18 @@ and extract all fields not available from Algolia:
 
 Strategy:
   1. CSS selector extraction (primary — fast, no LLM cost)
-  2. Claude Haiku fallback for pages where selectors fail (e.g. unusual layouts)
+  2. LLM fallback for pages where selectors fail (e.g. unusual layouts)
 """
 import json
 import logging
 import re
 from datetime import datetime, timezone
 
-from anthropic import AsyncAnthropic
 from bs4 import BeautifulSoup
 from playwright.async_api import BrowserContext
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+from agents.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +31,14 @@ class ExtractorAgent:
     def __init__(
         self,
         context: BrowserContext,
-        anthropic_client: AsyncAnthropic | None = None,
+        llm_client: LLMClient | None = None,
         use_llm_fallback: bool = True,
         rate_limit_delay: float = 1.5,
         page_timeout_ms: int = 30000,
     ):
         self.context = context
-        self.client = anthropic_client
-        self.use_llm = use_llm_fallback and anthropic_client is not None
+        self.client = llm_client
+        self.use_llm = use_llm_fallback and llm_client is not None
         self.delay = rate_limit_delay
         self.timeout = page_timeout_ms
 
@@ -61,9 +62,9 @@ class ExtractorAgent:
 
         try:
             await page.goto(product_url, wait_until="load", timeout=self.timeout)
-            await page.wait_for_timeout(2500)
+            await page.wait_for_timeout(1500)
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight * 0.5)")
-            await page.wait_for_timeout(1000)
+            await page.wait_for_timeout(500)
 
             html = await page.content()
             soup = BeautifulSoup(html, "lxml")
@@ -216,7 +217,7 @@ class ExtractorAgent:
         return fields
 
     async def _extract_llm(self, soup: BeautifulSoup, url: str, partial: dict) -> dict:
-        """Use Claude Haiku to extract fields from page text when selectors fail."""
+        """Use the configured LLM to extract fields from page text when selectors fail."""
         if not self.client:
             return partial
 
@@ -233,19 +234,10 @@ Return a JSON object with these fields (use null if not found):
   "unit_size": "pack/unit size e.g. '100/box'",
   "specifications": {{"key": "value"}}
 }}
-Only return the JSON, nothing else."""
+        Only return the JSON, nothing else."""
 
         try:
-            response = await self.client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=512,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            text_out = response.content[0].text.strip()
-            # Strip markdown code fences if present
-            text_out = re.sub(r"^```(?:json)?\s*", "", text_out)
-            text_out = re.sub(r"\s*```$", "", text_out)
-            extracted = json.loads(text_out)
+            extracted = await self.client.complete_json(prompt, max_tokens=512)
 
             if extracted.get("description") and not partial.get("description"):
                 partial["description"] = extracted["description"]
